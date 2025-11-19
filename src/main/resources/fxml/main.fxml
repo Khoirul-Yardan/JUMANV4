@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="id.juman.ui.MainController" prefWidth="900" prefHeight="600">
+  <top>
+    <ToolBar>
+      <Label text="JuMan - Dashboard" style="-fx-font-weight:bold; -fx-text-fill: linear-gradient(#7ee7ff, #9ef7c7);"/>
+    </ToolBar>
+  </top>
+  <center>
+  <HBox spacing="12" alignment="CENTER_LEFT" style="-fx-padding:12;">
+      <VBox spacing="8">
+        <Label fx:id="infoLabel" wrapText="true" styleClass="info"/>
+        <ListView fx:id="listView" prefWidth="520" prefHeight="360"/>
+        <Label fx:id="statusLabel" wrapText="true" styleClass="status"/>
+        <HBox spacing="8">
+          <Button fx:id="addBtn" text="Add &amp; Encrypt" onAction="#onAdd"/>
+          <Button fx:id="openBtn" text="Open" onAction="#onOpen"/>
+          <Button fx:id="exportBtn" text="Export" onAction="#onExport"/>
+          <Button fx:id="deleteBtn" text="Delete" onAction="#onDelete"/>
+          <Button fx:id="refreshBtn" text="Refresh" onAction="#onRefresh"/>
+        </HBox>
+      </VBox>
+      <VBox spacing="10" alignment="TOP_CENTER" style="-fx-padding:20;">
+        <Button fx:id="backupBtn" text="Backup (single .jumanbackup)" onAction="#onBackup" prefWidth="200"/>
+        <Button fx:id="recoverBtn" text="Restore backup" onAction="#onRecover" prefWidth="200"/>
+      </VBox>
+    </HBox>
+  </center>
+</BorderPane>

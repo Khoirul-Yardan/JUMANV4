@@ -1,0 +1,34 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Audit JuMan</title></head><body>
+<h1>Audit Keamanan JuMan</h1><p>Dibuat: 2025-11-19T10:27:25.031041+00:00 UTC</p>
+<h2>Skor: 60/100</h2>
+<h3>Risiko terdeteksi</h3><ul>
+<li>master.key tidak terenkripsi ditemukan — sangat berisiko</li>
+</ul>
+<h3>Diagram Komponen</h3>
+<img src="components.png" style="max-width:100%">
+<h3>Detail</h3>
+<pre>
+{
+  "data_dir": "C:\\Users\\yarda\\Documents\\JuMan",
+  "config": {},
+  "master_key_enc": false,
+  "recovery": false,
+  "storage_exists": true,
+  "backups": [],
+  "legacy_config": {
+    "passwordChanged": "true",
+    "passwordHash": "9/G7QpJSiCRijXr1QAAWsocKwTpmXfl++216Ek22mNs\\=",
+    "passwordSalt": "tiGnqQTkA+a2cxqRwWCxUA\\=\\=",
+    "username": "admin"
+  },
+  "dictionary": {
+    "found": null,
+    "tried": 7
+  },
+  "risks": [
+    "master.key tidak terenkripsi ditemukan — sangat berisiko"
+  ],
+  "score": 60
+}
+</pre>
+</body></html>

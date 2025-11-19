@@ -1,0 +1,57 @@
+
+.root {
+    -fx-font-family: "Inter", "Segoe UI", Roboto, Arial;
+    -fx-background-color: linear-gradient(#071018, #0c1320);
+    -fx-text-fill: #dceefc;
+}
+.title {
+    -fx-font-size: 26px;
+    -fx-text-fill: linear-gradient(from 0% 0% to 100% 0%, #58b8ff, #7ef3c1);
+    -fx-font-weight: 700;
+}
+.button {
+    -fx-background-radius: 10;
+    -fx-padding: 10 18 10 18;
+    -fx-background-color: linear-gradient(#1b5068, #0f2b3a);
+    -fx-text-fill: #e6f7ff;
+    -fx-font-weight: 600;
+    -fx-effect: dropshadow(two-pass-box, rgba(0,0,0,0.4), 4, 0.0, 0, 2);
+}
+.button:hover {
+    -fx-background-color: linear-gradient(#2a6a88, #14414f);
+}
+.list-view {
+    -fx-background-color: rgba(255,255,255,0.02);
+    -fx-border-color: rgba(255,255,255,0.04);
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+}
+
+.status {
+    -fx-text-fill: #9fb6d8;
+    -fx-font-size: 12px;
+}
+
+.info {
+    -fx-text-fill: #bfe9ff;
+    -fx-font-size: 12px;
+}
+
+/* Center the login VBox better */
+AnchorPane > VBox {
+    -fx-alignment: center;
+    -fx-spacing: 12;
+    -fx-padding: 40 20 40 20;
+}
+
+TextField, PasswordField {
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-padding: 8 10 8 10;
+    -fx-background-color: rgba(255,255,255,0.04);
+    -fx-border-color: rgba(255,255,255,0.06);
+}
+
+ListView .list-cell {
+    -fx-padding: 8 12 8 12;
+}

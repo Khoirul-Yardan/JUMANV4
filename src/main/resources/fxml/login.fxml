@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+<AnchorPane xmlns:fx="http://javafx.com/fxml" fx:controller="id.juman.ui.LoginController" prefWidth="760" prefHeight="500">
+  <children>
+    <VBox alignment="CENTER" spacing="12.0" layoutX="90" layoutY="60" prefWidth="580">
+      <Label text="JuMan - JustManage" styleClass="title"/>
+      <Label fx:id="statusLabel" wrapText="true" styleClass="status"/>
+      <TextField fx:id="usernameField" promptText="Username" prefWidth="400"/>
+      <PasswordField fx:id="passwordField" promptText="Password" prefWidth="400"/>
+  <Button fx:id="loginBtn" text="Login" onAction="#onLogin" prefWidth="120"/>
+  <Hyperlink fx:id="forgotLink" text="Forgot password?" onAction="#onForgot" />
+      <Label text="Default credentials: admin / 123" style="-fx-text-fill:#9fb6d8;"/>
+    </VBox>
+  </children>
+</AnchorPane>
