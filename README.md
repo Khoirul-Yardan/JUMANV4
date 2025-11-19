@@ -118,14 +118,6 @@ public class MainController {
 6) Separation of Concerns
 - UI (FXML + Controllers) terpisah dari `core` package (auth, file, crypto, backup). Pastikan controllers hanya mengorkestrasi dan tidak menyuntikkan logic bisnis berlebih.
 
-Rekomendasi praktis dan langkah kecil yang mudah diimplementasikan
-- Tambahkan interface untuk layanan inti: `ICryptoService`, `IFileManager`, `IBackupService`, `IAuthManager`.
-- Gunakan constructor injection di controllers agar mudah unit-test (contoh ada di atas).
-- Ekstrak file persistence ke kelas terpisah (`AuthStorage`) sehingga `AuthManager` fokus pada kebijakan autentikasi.
-- Gunakan DTO/metadata file (id, originalName, storedName, createdAt) alih-alih menempelkan metadata ke nama file.
-- Pastikan semua I/O dalam `FileManager` memakai try-with-resources.
-
-Jika Anda ingin, saya bisa otomatis menambahkan contoh `ICryptoService` dan refactor kecil (1 file) serta menambahkan `docs/PBO.md`. Pilih opsi: tambahkan langsung ke `README.md` (sudah saya lakukan), buat `docs/PBO.md`, atau buat contoh refactor kode (interface + controller injection). 
-
----
-Saya telah menambahkan bagian PBO ini ke README. Jika ingin, saya bisa juga membuat PR-style patch yang memperkenalkan `ICryptoService` dan memperbarui satu controller sebagai contoh konkret (dan menambahkan unit test). Pilih langkah berikutnya.
+[Metode PBO](doc/PBO.md)
+[Audit](tools/README_AUDIT.md)
+[Security](tools/README_SECURITY.md)
