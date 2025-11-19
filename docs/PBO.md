@@ -349,4 +349,236 @@ Jika Anda mau, saya bisa juga:
 - Atau langsung menerapkan refactor contoh (interface + satu controller) dan menambahkan unit test.
 
 Dokumen diperbarui: 2025-11-06
+ 
+---
+
+## Contoh Implementasi — Petunjuk File-per-File (Praktis)
+
+Di bawah ini adalah panduan konkret (file + lokasi method) untuk perubahan keamanan yang direkomendasikan. Salin-potong potongan kode ini ke file yang disebutkan dan letakkan method baru di lokasi yang diindikasikan.
+
+- **`src/main/java/id/juman/core/AuthManager.java`**
+  - Letakkan: setelah method `pbkdf2(...)` atau dekat area yang menangani `masterKey`/IO.
+  - Tambahkan imports jika belum ada: `javax.crypto.*`, `javax.crypto.spec.GCMParameterSpec`, `javax.crypto.spec.SecretKeySpec`, `java.io.*`, `java.nio.file.*`, `java.security.*`, `java.util.*`, `java.nio.charset.StandardCharsets`.
+  - Tujuan: enkripsi `master.key` menjadi `master.key.enc` menggunakan password-derived AES key dan menyediakan method migrasi.
+
+Contoh (paste ke `AuthManager`):
+
+```java
+private static final String MASTER_KEY_ENC_FILENAME = "master.key.enc";
+private static final byte[] MASTER_MAGIC = "JMNK".getBytes(StandardCharsets.US_ASCII);
+private static final int PBKDF2_ITER = 200_000; // uji performa pada target hardware
+private static final int SALT_LEN = 16;
+private static final int IV_LEN = 12;
+private static final int TAG_LEN = 128;
+
+private SecretKey deriveAesKeyFromPassword(char[] password, byte[] salt, int iterations, int keyBits) throws Exception {
+    SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+    PBEKeySpec spec = new PBEKeySpec(password, salt, iterations, keyBits);
+    byte[] keyBytes = skf.generateSecret(spec).getEncoded();
+    return new SecretKeySpec(keyBytes, "AES");
+}
+
+public void encryptAndStoreMasterKey(char[] password) throws Exception {
+    if (masterKey == null) throw new IllegalStateException("masterKey not initialized");
+    SecureRandom rng = new SecureRandom();
+    byte[] salt = new byte[SALT_LEN]; rng.nextBytes(salt);
+    SecretKey wrapKey = deriveAesKeyFromPassword(password, salt, PBKDF2_ITER, 256);
+
+    byte[] iv = new byte[IV_LEN]; rng.nextBytes(iv);
+    Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+    GCMParameterSpec gcm = new GCMParameterSpec(TAG_LEN, iv);
+    cipher.init(Cipher.ENCRYPT_MODE, wrapKey, gcm);
+
+    byte[] plain = masterKey.getEncoded();
+    byte[] cipherText = cipher.doFinal(plain);
+
+    Path out = dataDir.resolve(MASTER_KEY_ENC_FILENAME);
+    try (DataOutputStream dos = new DataOutputStream(Files.newOutputStream(out, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
+        dos.write(MASTER_MAGIC);                 // 4 bytes magic
+        dos.writeByte(1);                        // version
+        dos.writeInt(salt.length); dos.write(salt);
+        dos.writeInt(iv.length); dos.write(iv);
+        dos.writeInt(cipherText.length); dos.write(cipherText);
+    }
+}
+
+public SecretKey loadMasterKeyFromEncrypted(char[] password) throws Exception {
+    Path in = dataDir.resolve(MASTER_KEY_ENC_FILENAME);
+    if (!Files.exists(in)) return null;
+    try (DataInputStream dis = new DataInputStream(Files.newInputStream(in))) {
+        byte[] magic = new byte[4]; dis.readFully(magic);
+        if (!Arrays.equals(magic, MASTER_MAGIC)) throw new IOException("Bad master.key.enc magic");
+        int version = dis.readUnsignedByte();
+        int saltLen = dis.readInt(); byte[] salt = new byte[saltLen]; dis.readFully(salt);
+        int ivLen = dis.readInt(); byte[] iv = new byte[ivLen]; dis.readFully(iv);
+        int ctLen = dis.readInt(); byte[] ct = new byte[ctLen]; dis.readFully(ct);
+
+        SecretKey wrapKey = deriveAesKeyFromPassword(password, salt, PBKDF2_ITER, 256);
+        Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+        GCMParameterSpec gcm = new GCMParameterSpec(TAG_LEN, iv);
+        cipher.init(Cipher.DECRYPT_MODE, wrapKey, gcm);
+        byte[] plain = cipher.doFinal(ct);
+        return new SecretKeySpec(plain, "AES");
+    }
+}
+```
+
+- **Migrasi**: lakukan check pada startup; jika `master.key` ada dan `master.key.enc` tidak ada, minta password pada user (dialog JavaFX), panggil `encryptAndStoreMasterKey(password)` lalu hapus `master.key` setelah `secureOverwrite`.
+
+
+- **`src/main/java/id/juman/core/CryptoService.java`**
+  - Letakkan: ganti/extend method `encryptFile`/`decryptFile` dengan format header-aware.
+  - Tujuan: menulis header (magic, version, metadata length, metadata, IV) sebelum ciphertext sehingga file tetap bisa dikenali meski ekstensi diubah.
+
+Contoh helper (paste ke `CryptoService`):
+
+```java
+private static final byte[] FILE_MAGIC = "JMN1".getBytes(StandardCharsets.US_ASCII);
+private static final int HEADER_VERSION = 1;
+
+public static void encryptFileWithHeader(File in, File out, SecretKey key, Map<String,String> meta) throws Exception {
+    byte[] iv = new byte[12]; SecureRandom rng = new SecureRandom(); rng.nextBytes(iv);
+    Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+    cipher.init(Cipher.ENCRYPT_MODE, key, new GCMParameterSpec(128, iv));
+
+    byte[] metaJson = "{}".getBytes(StandardCharsets.UTF_8);
+    if (meta != null && !meta.isEmpty()) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("{");
+        boolean first = true;
+        for (Map.Entry<String,String> e : meta.entrySet()) {
+            if (!first) sb.append(",");
+            sb.append("\"").append(e.getKey()).append("\":\"").append(e.getValue()).append("\"");
+            first = false;
+        }
+        sb.append("}");
+        metaJson = sb.toString().getBytes(StandardCharsets.UTF_8);
+    }
+
+    try (FileOutputStream fos = new FileOutputStream(out);
+         CipherOutputStream cos = new CipherOutputStream(fos, cipher);
+         FileInputStream fis = new FileInputStream(in)) {
+        fos.write(FILE_MAGIC);
+        fos.write(HEADER_VERSION);
+        fos.write(ByteBuffer.allocate(4).putInt(metaJson.length).array());
+        fos.write(metaJson);
+        fos.write(iv); // fixed 12 bytes
+        byte[] buf = new byte[4096]; int r;
+        while ((r = fis.read(buf)) != -1) cos.write(buf, 0, r);
+    }
+}
+
+public static Map<String,Object> readHeader(Path encrypted) throws Exception {
+    try (InputStream is = Files.newInputStream(encrypted, StandardOpenOption.READ)) {
+        byte[] magic = new byte[4]; if (is.read(magic) != 4) throw new IOException("Bad file");
+        if (!Arrays.equals(magic, FILE_MAGIC)) throw new IOException("Unknown format");
+        int version = is.read();
+        byte[] lenb = new byte[4]; if (is.read(lenb) != 4) throw new IOException("Bad meta len");
+        int metaLen = ByteBuffer.wrap(lenb).getInt();
+        byte[] metaJson = new byte[metaLen]; if (is.read(metaJson) != metaLen) throw new IOException("Bad meta");
+        byte[] iv = new byte[12]; if (is.read(iv) != 12) throw new IOException("Bad iv");
+        Map<String,Object> ret = new HashMap<>();
+        ret.put("version", version);
+        ret.put("meta", new String(metaJson, StandardCharsets.UTF_8));
+        ret.put("iv", iv);
+        return ret;
+    }
+}
+```
+
+ - Setelah menambahkan, ubah pemanggil (mis. `FileManager.storeEncrypted(...)`) untuk memakai `encryptFileWithHeader(...)` dan tambahkan metadata `originalName` sehingga UI dapat menampilkan nama asli.
+
+
+- **`src/main/java/id/juman/core/BackupService.java`**
+  - Letakkan: di method yang membuat ZIP/backup; tambahkan HMAC signing dan verifikasi di method restore.
+  - Tujuan: hindari menyertakan `master.key` di backup dan tambahkan integritas backup dengan `HmacSHA256`.
+
+Contoh potongan (paste ke `BackupService`):
+
+```java
+private static final byte[] BACKUP_MAGIC = "JMNB".getBytes(StandardCharsets.US_ASCII);
+
+public Path createSignedBackup(Path zipPath, SecretKey hmacKey) throws Exception {
+    byte[] zipBytes = Files.readAllBytes(zipPath);
+    Mac mac = Mac.getInstance("HmacSHA256");
+    mac.init(new SecretKeySpec(hmacKey.getEncoded(), "HmacSHA256"));
+    byte[] tag = mac.doFinal(zipBytes);
+
+    Path signed = zipPath.resolveSibling(zipPath.getFileName().toString() + ".signed");
+    try (OutputStream os = Files.newOutputStream(signed, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
+        os.write(BACKUP_MAGIC);
+        os.write(1); // version
+        os.write(ByteBuffer.allocate(4).putInt(tag.length).array()); os.write(tag);
+        os.write(zipBytes);
+    }
+    return signed;
+}
+
+public boolean verifySignedBackup(Path signed, SecretKey hmacKey) throws Exception {
+    try (DataInputStream dis = new DataInputStream(Files.newInputStream(signed))) {
+        byte[] magic = new byte[4]; dis.readFully(magic);
+        if (!Arrays.equals(magic, BACKUP_MAGIC)) throw new IOException("Bad backup");
+        int version = dis.readUnsignedByte();
+        int tagLen = dis.readInt(); byte[] tag = new byte[tagLen]; dis.readFully(tag);
+        ByteArrayOutputStream bout = new ByteArrayOutputStream();
+        byte[] buf = new byte[4096]; int r;
+        while ((r = dis.read(buf)) != -1) bout.write(buf, 0, r);
+        byte[] zipBytes = bout.toByteArray();
+
+        Mac mac = Mac.getInstance("HmacSHA256");
+        mac.init(new SecretKeySpec(hmacKey.getEncoded(), "HmacSHA256"));
+        byte[] expected = mac.doFinal(zipBytes);
+        return MessageDigest.isEqual(expected, tag);
+    }
+}
+```
+
+ - Catatan: kunci HMAC (`hmacKey`) harus dilindungi (sama levelnya dengan master key). Jangan simpan `master.key` plain di zip — exclude `master.key` saat membuat ZIP.
+
+
+- **`src/main/java/id/juman/core/FileManager.java`**
+  - Letakkan: gunakan `findStoredPath(...)` pada semua panggilan decrypt/delete; setelah header-aware `CryptoService` dibuat, gunakan header untuk menampilkan nama asli.
+  - Contoh penggunaan (di `decryptToTemp` atau `decryptTo`):
+
+```java
+Path stored = findStoredPath(requestedStoredName);
+if (stored == null) throw new FileNotFoundException("Stored file not found: " + requestedStoredName);
+Map<String,Object> header = CryptoService.readHeader(stored);
+SecretKey master = AuthManager.getInstance().getMasterKey();
+// implement decryptFileWithHeader(...) di CryptoService untuk men-decrypt dan menulis ke target
+CryptoService.decryptFileWithHeader(stored.toFile(), target.toFile(), master);
+```
+
+ - Pastikan `deleteStored` melakukan `secureOverwrite(...)` sebelum menghapus file (sudah diimplementasikan pada perubahan sebelumnya).
+
+
+- **`src/main/java/id/juman/ui/MainController.java`**
+  - Letakkan: di `initialize()` tambahkan migrasi `master.key` → `master.key.enc`.
+  - Contoh snippet (paste di awal `initialize()` setelah load dataDir):
+
+```java
+Path data = AuthManager.getInstance().getDataDir();
+Path plainMaster = data.resolve("master.key");
+Path encMaster = data.resolve("master.key.enc");
+if (Files.exists(plainMaster) && !Files.exists(encMaster)) {
+    Optional<String> pwd = promptPassword("Please create a password to protect master key");
+    if (pwd.isPresent()) {
+        AuthManager.getInstance().encryptAndStoreMasterKey(pwd.get().toCharArray());
+        FileManager.secureOverwrite(plainMaster);
+        Files.deleteIfExists(plainMaster);
+    }
+}
+```
+
+  - `promptPassword(...)` harus berupa dialog JavaFX yang menyembunyikan input (gunakan custom `Dialog<String>` dengan `PasswordField`).
+
+
+### Catatan penting
+ - Uji performa KDF (`PBKDF2_ITER`) pada mesin target — iterasi tinggi mempengaruhi UX (login, migrasi).
+ - Secure-delete pada SSD/modern FS tidak menjamin penghapusan fisik (TRIM/wear-leveling). Dokumentasikan batasan ini di README.
+ - Jika memungkinkan, gunakan Argon2 via library (lebih aman untuk password hashing) — pertimbangkan perubahan bergantung pada kebutuhan distribusi.
+
+---
+
+Jika Anda ingin, saya dapat menerapkan patch otomatis (satu per file) ke repository sekarang. Pilih: `terapkan semua` atau `terapkan bertahap (AuthManager dulu)`.
 
