@@ -8,14 +8,143 @@ Dokumen ini menjelaskan konsep PBO yang dipakai (atau relevan) di proyek JuManV3
 
 Project JuManV3 menggunakan struktur berlapis: UI (FXML + Controllers) terpisah dari `core` (auth, crypto, file, backup). Secara umum terlihat penerapan:
 
-- Enkapsulasi: ya (CryptoService, FileManager, AuthManager)
-- Abstraksi: ya (CryptoService, BackupService sebagai API tingkat tinggi)
-- Komposisi: ya (controllers memegang instance service)
-- Pewarisan/Polimorfisme: minim (lebih mengandalkan komposisi)
-- Prinsip SOLID: sebagian diterapkan; DIP & O/C dapat ditingkatkan lewat interface/DI
 
-Dokumen ini menjabarkan tiap konsep dan memberikan contoh kode serta rekomendasi.
 
+## Inheritance, Polymorphism, dan Penerapan SOLID (Lengkap, berorientasi baris/metode)
+
+Dokumentasi di atas membahas konsep umum — bagian ini memberikan contoh yang lebih lengkap dan terhubung langsung ke file/metode yang ada di kode base. Semua contoh menunjukkan: "di file mana", "di metode mana", dan "apa yang diubah".
+
+1) **Inheritance (Pewarisan) — Kapan dan bagaimana**
+
+- Mengapa pakai: pewarisan berguna ketika ada perilaku bersama yang wajar diwariskan, atau ketika perlu membuat variasi implementasi yang menambahkan/menimpa perilaku dasar.
+- Risiko: pewarisan yang berlebihan menyebabkan hierarki kaku. Lebih sering gunakan interface + komposisi.
+
+Contoh konkret (file/metode):
+- File: `src/main/java/id/juman/core/CryptoService.java`
+    - Saat ini `CryptoService` berisi implementasi AES/GCM. Jika ingin mendukung HSM atau provider hardware, buat abstraksi kelas/inteface dasar dan subkelas untuk implementasi spesifik.
+    - Tambahkan `ICryptoService` (interface) dan buat `CryptoServiceAesGcm` yang meng-implementasi.
+
+Contoh kode (buat file baru `ICryptoService.java` di `core`):
+
+```java
+// src/main/java/id/juman/core/ICryptoService.java
+public interface ICryptoService {
+        void encryptFile(File in, File out, SecretKey key, Map<String,String> meta) throws Exception;
+        void decryptFile(File in, File out, SecretKey key) throws Exception;
+}
+```
+
+Contoh implementasi (di `CryptoServiceAesGcm.java`):
+
+```java
+// src/main/java/id/juman/core/CryptoServiceAesGcm.java
+public class CryptoServiceAesGcm implements ICryptoService {
+        @Override
+        public void encryptFile(File in, File out, SecretKey key, Map<String,String> meta) throws Exception {
+                CryptoService.encryptFileWithHeader(in, out, key, meta);
+        }
+
+        @Override
+        public void decryptFile(File in, File out, SecretKey key) throws Exception {
+                CryptoService.decryptFileWithHeader(in, out, key);
+        }
+}
+```
+
+Perubahan konsumsi (mis. `FileManager` constructor):
+
+```java
+// sebelum
+fileManager = new FileManager(data);
+
+// sesudah (di MainController.initialize)
+ICryptoService crypto = new CryptoServiceAesGcm();
+fileManager = new FileManager(data, crypto);
+```
+
+Penempatan: edit `FileManager` constructor (`src/main/java/id/juman/core/FileManager.java`) untuk menerima `ICryptoService` dan gunakan interface tersebut untuk encrypt/decrypt.
+
+2) **Polymorphism — Penggunaan nyata**
+
+- Dengan interface `ICryptoService`, aplikasi tidak perlu tahu detail implementasi; saat testing, injeksikan mock `ICryptoService` ke `FileManager` untuk unit test.
+- Contoh lokasi: `FileManager.storeEncrypted(...)`, `FileManager.decryptTo(...)` — ubah pemanggilan `CryptoService.*` ke `cryptoService.encryptFile(...)`.
+
+3) **SOLID — Contoh terperinci dan modifikasi file**
+
+- Single Responsibility Principle (SRP)
+    - Masalah yang terdeteksi: `AuthManager` menggabungkan manajemen password, master key, dan I/O konfigurasi.
+    - Saran: ekstrak penyimpanan/IO ke `AuthStorage`.
+    - File yang diubah: buat `src/main/java/id/juman/core/AuthStorage.java` yang bertanggung jawab menyimpan/ membaca file `config.properties`, `master.key`, dan `master.key.enc`.
+
+Contoh `AuthStorage` (ringkas):
+
+```java
+public class AuthStorage {
+        private final Path dataDir;
+        public AuthStorage(Path dataDir) { this.dataDir = dataDir; }
+        public Path getConfigFile() { return dataDir.resolve("config.properties"); }
+        public Path getMasterKeyFile() { return dataDir.resolve("master.key"); }
+        public Path getEncryptedMasterKeyFile() { return dataDir.resolve("master.key.enc"); }
+        public void writeBytes(Path p, byte[] data) throws IOException { Files.write(p, data, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING); }
+}
+```
+
+- Open/Closed Principle (OCP)
+    - Buat `ICryptoService` sehingga penambahan algoritma baru tidak memodifikasi klien.
+
+- Liskov Substitution Principle (LSP)
+    - Pastikan semua implementasi `ICryptoService` memenuhi kontrak (mis. exception handling, file format expectations). Lokasi pengujian: unit-test `FileManager` yang menerima `ICryptoService`.
+
+- Interface Segregation Principle (ISP)
+    - Jangan gabungkan operasi yang tidak berhubungan ke satu interface. `ICryptoService` hanya berfokus pada encrypt/decrypt file, bukan pengelolaan kunci.
+
+- Dependency Inversion Principle (DIP)
+    - Ubah `FileManager` dan `BackupService` sehingga bergantung pada abstraksi (`ICryptoService`), bukan implementasi konkrit (`CryptoService`).
+
+4) **Contoh refactor step-by-step (saran implementasi, berurutan)**
+
+- Step A — Tambah `ICryptoService` dan `CryptoServiceAesGcm` (lihat kode di atas).
+- Step B — Ubah constructor `FileManager(Path dataDir)` menjadi `FileManager(Path dataDir, ICryptoService crypto)`; ganti semua pemanggilan `CryptoService.*` menjadi `crypto.*`.
+- Step C — Tambah `AuthStorage` dan pindahkan semua path/file access dari `AuthManager` ke `AuthStorage`.
+- Step D — Ubah `AuthManager` menjadi `AuthManager(AuthStorage storage)` dan panggil storage untuk membaca/menulis file.
+
+5) **Contoh testing & penggunaan baris/metode**
+
+- Unit test yang direkomendasikan (lokasi/target):
+    - `src/test/java/id/juman/core/FileManagerTest.java` — buat mock `ICryptoService` (mengembalikan buffer yang dapat didekripsi) dan tes `storeEncrypted` + `decryptToTemp` round-trip.
+    - `src/test/java/id/juman/core/AuthManagerTest.java` — uji `encryptAndStoreMasterKey` dan `loadMasterKeyFromEncrypted` menggunakan temporary dataDir (`java.nio.file.Files.createTempDirectory`).
+
+6) **Contoh kode kecil: Constructor injection pada `FileManager`**
+
+```java
+// File: src/main/java/id/juman/core/FileManager.java
+public class FileManager {
+        private final Path storageDir;
+        private final ICryptoService crypto;
+
+        public FileManager(Path dataDir, ICryptoService crypto) {
+                this.storageDir = dataDir.resolve("storage");
+                this.crypto = crypto;
+        }
+
+        public String storeEncrypted(File input, SecretKey key) throws Exception {
+                String id = UUID.randomUUID().toString();
+                String orig = input.getName().replaceAll("[^A-Za-z0-9._-]", "_");
+                File out = storageDir.resolve(id + "__" + orig + ".jmn").toFile();
+                crypto.encryptFile(input, out, key, Map.of("originalName", orig));
+                return out.getName();
+        }
+}
+```
+
+7) **Catatan praktis**
+
+- Gunakan dependency injection sederhana pada `JuManApp` (tempat aplikasi membuat instance service) untuk membuat `CryptoServiceAesGcm` dan menyuntikkannya ke `MainController`.
+- Pastikan semua perubahan dikompilasi dan diuji secara lokal: jalankan `mvn -q -DskipTests=false package` lalu `mvn javafx:run`.
+
+---
+
+Jika Anda setuju, saya akan menerapkan patch refactor bertahap: pertama tambahkan `ICryptoService` + `CryptoServiceAesGcm` + ubah `FileManager` constructor (commit 1). Setelah itu saya bisa lanjut ke `AuthStorage` dan `AuthManager` migrasi (commit 2). Pilih `terapkan bertahap` atau `terapkan semua`.
 ---
 
 ## 1) Enkapsulasi
