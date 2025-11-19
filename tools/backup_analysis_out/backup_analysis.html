@@ -1,0 +1,158 @@
+
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>JuMan Backup Security Analysis</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+    .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .security-score { font-size: 28px; font-weight: bold; padding: 20px; border-radius: 8px; margin: 10px 0; }
+    .critical { background: #ffcccc; color: #990000; }
+    .poor { background: #ffe6cc; color: #994400; }
+    .fair { background: #ffffcc; color: #999900; }
+    .good { background: #ccffcc; color: #009900; }
+    h1 { color: #333; border-bottom: 3px solid #007bff; padding-bottom: 10px; }
+    h2 { color: #555; margin-top: 30px; }
+    .findings { background: #f9f9f9; padding: 15px; border-left: 4px solid #007bff; margin: 10px 0; }
+    .warning { color: #d9534f; font-weight: bold; }
+    .recommendation { color: #5cb85c; font-weight: bold; }
+    .diagram { margin: 20px 0; text-align: center; }
+    .diagram img { max-width: 100%; border: 1px solid #ddd; border-radius: 4px; }
+    table { width: 100%; border-collapse: collapse; }
+    td, th { border: 1px solid #ddd; padding: 10px; text-align: left; }
+    th { background: #f0f0f0; font-weight: bold; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>🔐 JuMan Backup Security Analysis Report</h1>
+  
+  <div class="security-score poor">
+    Security Score: 33/100 - POOR
+  </div>
+  
+  <h2>File Information</h2>
+  <div class="findings">
+    <p><b>Backup File:</b> C:\Users\yarda\Documents\juman\juman_backup_2025-11-19T13_29_13_537709Z.zip.jumanbackup</p>
+    <p><b>Format Detected:</b> unknown</p>
+    <p><b>Analysis Date:</b> 2025-11-19 22:13:43</p>
+  </div>
+  
+  <h2>Key Findings</h2>
+  <div class="findings">
+    
+    <p class="warning">⚠️ Unknown backup format</p>
+    
+    
+    
+    <p class="recommendation">✓ KDF Strength: FAIR</p>
+    
+  </div>
+  
+  
+  
+  <h2>Detailed Findings</h2>
+  <table>
+    <tr><th>Property</th><th>Value</th><th>Assessment</th></tr>
+    
+    <tr>
+      <td><b>Format</b></td>
+      <td>unknown</td>
+      <td>Backup type detected</td>
+    </tr>
+    
+    <tr>
+      <td><b>KDF Iterations</b></td>
+      <td>65,536</td>
+      <td>FAIR</td>
+    </tr>
+    
+    <tr>
+      <td><b>Master Key Plain</b></td>
+      <td>NO - OK</td>
+      <td>✓ Good</td>
+    </tr>
+    
+    <tr>
+      <td><b>Master Key Encrypted</b></td>
+      <td>NO</td>
+      <td>Not present</td>
+    </tr>
+    
+  </table>
+  
+  <h2>Security Diagrams</h2>
+  
+  <div class="diagram">
+    <h3>Security Score Gauge</h3>
+    <img src="tools\backup_analysis_out\security_gauge.png" alt="Security Gauge">
+  </div>
+  
+  <div class="diagram">
+    <h3>Attack Scenarios - Time to Crack (Heatmap)</h3>
+    <p><i>Shows estimated years to crack password across different attackers and password strengths</i></p>
+    <img src="tools\backup_analysis_out\attack_scenarios.png" alt="Attack Scenarios">
+  </div>
+  
+  <div class="diagram">
+    <h3>KDF Strength Comparison</h3>
+    <p><i>Current iterations vs industry standards</i></p>
+    <img src="tools\backup_analysis_out\kdf_comparison.png" alt="KDF Comparison">
+  </div>
+  
+  <div class="diagram">
+    <h3>Attack Surface</h3>
+    <img src="tools\backup_analysis_out\attack_surface.png" alt="Attack Surface">
+  </div>
+  
+  <div class="diagram">
+    <h3>Brute Force Time Estimates</h3>
+    <img src="tools\backup_analysis_out\bruteforce_estimates.png" alt="Brute Force Estimates">
+  </div>
+  
+  <h2>Interpretation Guide</h2>
+  <div class="findings">
+    <p><b>Security Score Levels:</b></p>
+    <ul>
+      <li><b style="color: #990000;">CRITICAL (0-29):</b> Immediate action required. System is vulnerable.</li>
+      <li><b style="color: #d9534f;">POOR (30-49):</b> Significant security issues need attention.</li>
+      <li><b style="color: #f0ad4e;">FAIR (50-69):</b> Acceptable but improvements recommended.</li>
+      <li><b style="color: #5cb85c;">GOOD (70-100):</b> Strong security posture.</li>
+    </ul>
+    
+    <p><b>Heatmap Color Legend (Attack Scenarios):</b></p>
+    <ul>
+      <li><span style="background: red; padding: 2px 5px; color: white;">Red</span> = CRITICAL (< 1 second)</li>
+      <li><span style="background: orange; padding: 2px 5px;">Orange</span> = HIGH RISK (< 100 years)</li>
+      <li><span style="background: yellow; padding: 2px 5px;">Yellow</span> = MEDIUM RISK (< 10,000 years)</li>
+      <li><span style="background: lightgreen; padding: 2px 5px;">Green</span> = SAFE (> 10,000 years)</li>
+    </ul>
+  </div>
+  
+  <h2>Recommendations</h2>
+  <div class="findings">
+    <ol>
+      
+      <li>KDF Strength: FAIR</li>
+      
+      <li>Increase PBKDF2 iterations to 300,000 or more</li>
+      
+      <li>Use backup encryption (signed-backup format with HMAC)</li>
+      
+      <li>Exclude master.key from backups</li>
+      
+      <li>Test restore process regularly</li>
+      
+      <li>Store backups in secure, separate location</li>
+      
+      <li>Implement versioning and retention policy</li>
+      
+    </ol>
+  </div>
+  
+  <hr style="margin-top: 40px;">
+  <p style="color: #999; font-size: 12px;">Report generated by JuMan Security Audit Tool. This analysis is for informational purposes only and does not attempt decryption.</p>
+</div>
+</body>
+</html>

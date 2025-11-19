@@ -1,0 +1,157 @@
+{
+  "backup_file": "C:\\Users\\yarda\\Documents\\juman\\juman_backup_2025-11-19T13_29_13_537709Z.zip.jumanbackup",
+  "timestamp": "2025-11-19T22:13:43.540265",
+  "security_assessment": {
+    "score": 33.0,
+    "level": "POOR",
+    "warnings": [
+      "Unknown backup format"
+    ],
+    "recommendations": [
+      "KDF Strength: FAIR"
+    ]
+  },
+  "file_format": {
+    "detected_format": "unknown",
+    "note": "Unknown format"
+  },
+  "kdf_analysis": {
+    "iterations": 65536,
+    "assessment": {
+      "score": 60,
+      "level": "FAIR",
+      "description": "Fair (65k-200k), consider raising to 300k+"
+    },
+    "source": "src\\main\\java\\id\\juman\\core\\AuthManager.java"
+  },
+  "attack_scenarios": [
+    {
+      "entropy_bits": 20,
+      "attacker": "Local (CPU GPU)",
+      "rate": 1000000000.0,
+      "years": 2.17908031253171e-06,
+      "feasibility": "CRITICAL",
+      "color": "red"
+    },
+    {
+      "entropy_bits": 20,
+      "attacker": "Medium (Cloud GPU)",
+      "rate": 100000000.0,
+      "years": 2.1790803125317098e-05,
+      "feasibility": "CRITICAL",
+      "color": "red"
+    },
+    {
+      "entropy_bits": 20,
+      "attacker": "Strong (Botnet)",
+      "rate": 10000000000.0,
+      "years": 2.1790803125317098e-07,
+      "feasibility": "CRITICAL",
+      "color": "red"
+    },
+    {
+      "entropy_bits": 20,
+      "attacker": "Enterprise (Quantum?)",
+      "rate": 1000000000000.0,
+      "years": 2.1790803125317097e-09,
+      "feasibility": "CRITICAL",
+      "color": "red"
+    },
+    {
+      "entropy_bits": 40,
+      "attacker": "Local (CPU GPU)",
+      "rate": 1000000000.0,
+      "years": 2.28493131779325,
+      "feasibility": "HIGH RISK",
+      "color": "orange"
+    },
+    {
+      "entropy_bits": 40,
+      "attacker": "Medium (Cloud GPU)",
+      "rate": 100000000.0,
+      "years": 22.8493131779325,
+      "feasibility": "HIGH RISK",
+      "color": "orange"
+    },
+    {
+      "entropy_bits": 40,
+      "attacker": "Strong (Botnet)",
+      "rate": 10000000000.0,
+      "years": 0.228493131779325,
+      "feasibility": "CRITICAL",
+      "color": "red"
+    },
+    {
+      "entropy_bits": 40,
+      "attacker": "Enterprise (Quantum?)",
+      "rate": 1000000000000.0,
+      "years": 0.00228493131779325,
+      "feasibility": "CRITICAL",
+      "color": "red"
+    },
+    {
+      "entropy_bits": 60,
+      "attacker": "Local (CPU GPU)",
+      "rate": 1000000000.0,
+      "years": 2395924.141486375,
+      "feasibility": "SAFE",
+      "color": "green"
+    },
+    {
+      "entropy_bits": 60,
+      "attacker": "Medium (Cloud GPU)",
+      "rate": 100000000.0,
+      "years": 23959241.41486375,
+      "feasibility": "SAFE",
+      "color": "green"
+    },
+    {
+      "entropy_bits": 60,
+      "attacker": "Strong (Botnet)",
+      "rate": 10000000000.0,
+      "years": 239592.4141486375,
+      "feasibility": "SAFE",
+      "color": "green"
+    },
+    {
+      "entropy_bits": 60,
+      "attacker": "Enterprise (Quantum?)",
+      "rate": 1000000000000.0,
+      "years": 2395.924141486375,
+      "feasibility": "MEDIUM RISK",
+      "color": "yellow"
+    },
+    {
+      "entropy_bits": 80,
+      "attacker": "Local (CPU GPU)",
+      "rate": 1000000000.0,
+      "years": 2512308552583.2173,
+      "feasibility": "SAFE",
+      "color": "green"
+    },
+    {
+      "entropy_bits": 80,
+      "attacker": "Medium (Cloud GPU)",
+      "rate": 100000000.0,
+      "years": 25123085525832.17,
+      "feasibility": "SAFE",
+      "color": "green"
+    },
+    {
+      "entropy_bits": 80,
+      "attacker": "Strong (Botnet)",
+      "rate": 10000000000.0,
+      "years": 251230855258.32172,
+      "feasibility": "SAFE",
+      "color": "green"
+    },
+    {
+      "entropy_bits": 80,
+      "attacker": "Enterprise (Quantum?)",
+      "rate": 1000000000000.0,
+      "years": 2512308552.583217,
+      "feasibility": "SAFE",
+      "color": "green"
+    }
+  ]
+}

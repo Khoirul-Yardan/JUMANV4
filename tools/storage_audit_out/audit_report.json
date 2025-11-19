@@ -1,0 +1,51 @@
+{
+  "summary": {
+    "total_files": 2,
+    "average_score": 55.0,
+    "risk_level": "FAIR",
+    "timestamp": "2025-11-19T22:12:39.251058"
+  },
+  "report": {
+    "files": [
+      {
+        "path": "347f2f28-9037-48ae-adbf-c768fc9fe1cc__wallpaperflare.com_wallpaper__3_.jpg.jmn",
+        "size": 211938,
+        "format": "unknown-binary",
+        "file_score": 40,
+        "assessment": "Unknown format; cannot verify encryption"
+      },
+      {
+        "path": "e1334552-9440-4c5a-942d-1d61b174bb0d__iot-based-smart-helmet-for-mining-workers-adafruit-5.j.jmn",
+        "size": 109488,
+        "format": "likely-aes-gcm",
+        "iv_len": 12,
+        "tag_len": 16,
+        "file_score": 70,
+        "assessment": "\u2713 OK"
+      }
+    ]
+  },
+  "kdf": {
+    "found": true,
+    "source": "src\\main\\java\\id\\juman\\core\\AuthManager.java",
+    "iterations": 65536
+  },
+  "files_with_scores": [
+    {
+      "path": "347f2f28-9037-48ae-adbf-c768fc9fe1cc__wallpaperflare.com_wallpaper__3_.jpg.jmn",
+      "size": 211938,
+      "format": "unknown-binary",
+      "file_score": 40,
+      "assessment": "Unknown format; cannot verify encryption"
+    },
+    {
+      "path": "e1334552-9440-4c5a-942d-1d61b174bb0d__iot-based-smart-helmet-for-mining-workers-adafruit-5.j.jmn",
+      "size": 109488,
+      "format": "likely-aes-gcm",
+      "iv_len": 12,
+      "tag_len": 16,
+      "file_score": 70,
+      "assessment": "\u2713 OK"
+    }
+  ]
+}

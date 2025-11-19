@@ -119,6 +119,9 @@ public class MainController {
 - UI (FXML + Controllers) terpisah dari `core` package (auth, file, crypto, backup). Pastikan controllers hanya mengorkestrasi dan tidak menyuntikkan logic bisnis berlebih.
 
 [Metode PBO](docs/PBO.md)
-[Audit](tools/README_AUDIT.md)
-[Security](tools/README_SECURITY.md)
+[Audit Tool Guide](tools/SECURITY_AUDIT_README.md)
+[Audit Results](tools/AUDIT_RESULTS_SUMMARY.md)
+[Remediation Plan](tools/ACTION_ITEMS_REMEDIATION.md)
+[Audit (Legacy)](tools/README_AUDIT.md)
+[Security (Legacy)](tools/README_SECURITY.md)
 [Tingkatan keamanan](tools/password_analysis_out/password_analysis_report.md)
